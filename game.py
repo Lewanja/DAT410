@@ -31,7 +31,7 @@ def uvu():
                 break
         else:
             print(f"The move of Player is {game_class['current_player']}")
-            player_move(game_class)
+            ai_enhanced_move(game_class)
             print_gameboard(game_class)
 
             if check_winner(game_class):
@@ -139,6 +139,78 @@ def check_diago(board, player):
             if board[x][y] != player:
                 win = False
     return win
+
+def dfs_minimax(board,depth,maxi):
+    # copy board to avoid modifying the original
+    copy_board = [row[:] for row in board]
+    #check  status
+    if check_winner({'board': copy_board, 'current_player': 'O'}):
+        return 10 - depth
+    if check_winner({'board': copy_board, 'current_player': 'X'}):
+        return -10 + depth
+    if all(cell == ' ' for row in copy_board for cell in row):
+        return 0
+    # maximixing player 0
+    if maxi:
+        best_score = -inf
+        for row in range(3):
+            for col in range(3):
+                if copy_board[row][col]== ' ':
+                    copy_board[row][col]="X"
+                    score = dfs_minimax(copy_board, depth+1, True)
+                    #undo the move
+                    copy_board[row][col]= ' '
+                    best_score = max(best_score,score)
+        return best_score
+
+        # Minimizing player  X
+    else:
+        best_score = inf
+        for row in range(3):
+            for col in range(3):
+                if copy_board[row][col] == ' ':
+                    # Try this move
+                    copy_board[row][col] = 'X'
+
+                    # Recursive call
+                    score = dfs_minimax(copy_board, depth + 1, True)
+
+                    # Undo the move
+                    copy_board[row][col] = ' '
+
+                    best_score = min(best_score, score)
+        return best_score
+
+
+def ai_enhanced_move(game_class):
+    best_score = -inf
+    best_move = None
+
+    for position in range(1, 10):
+        row = (position - 1) // 3
+        col = (position - 1) % 3
+
+        # Check if empty
+        if game_class['board'][row][col] == game_class['empty']:
+            # Try move
+            game_class['board'][row][col] = game_class['opponent']
+
+            # Calculate the score using minimax with depth-first search
+            score = dfs_minimax(game_class['board'], 0, False)
+
+            # Undo the move
+            game_class['board'][row][col] = game_class['empty']
+
+            # Update best move
+            if score > best_score:
+                best_score = score
+                best_move = position
+
+    # Make the best move
+    if best_move is not None:
+        row = (best_move - 1) // 3
+        col = (best_move - 1) % 3
+        game_class['board'][row][col] = game_class['opponent']
 
 uvu()
 
